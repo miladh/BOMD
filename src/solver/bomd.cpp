@@ -1,15 +1,17 @@
 #include "bomd.h"
 
 
-BOMD::BOMD(hf::ElectronicSystem *system, hf::HFsolver *solver):
+using namespace hf;
+
+BOMD::BOMD(ElectronicSystem *system, HFsolver *solver):
     m_system(system),
     m_solver(solver),
     m_atoms(system->atoms()),
     m_nAtoms(system->nAtoms())
 {
-    m_nSteps = 500;
+    m_nSteps = 20;
     m_dt   =  0.1;
-    m_frictionConstant = 0.4;
+    m_frictionConstant = 0.0;
 
     m_time = zeros(m_nSteps);
     m_kineticEnergy = zeros(m_nSteps);

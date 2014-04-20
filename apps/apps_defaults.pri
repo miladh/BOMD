@@ -6,4 +6,6 @@ LIBS += -lboost_filesystem -lboost_system -lboost_mpi -lboost_serialization
 LIBS += $$system(mpicxx --showme:link)
 QMAKE_CXXFLAGS += $$system(mpicxx --showme:compile)
 
+LIBS += -lbomd
 INCLUDEPATH += $$TOP_PWD/include
+

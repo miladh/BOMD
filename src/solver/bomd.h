@@ -8,11 +8,12 @@
 
 using namespace arma;
 using namespace std;
+using namespace hf;
 
 class BOMD
 {
 public:
-    BOMD(hf::ElectronicSystem *system, hf::HFsolver *solver);
+    BOMD(ElectronicSystem *system, HFsolver *solver);
 
     void runDynamics();
     void computeForces();
