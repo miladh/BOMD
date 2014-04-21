@@ -26,11 +26,10 @@ BOMD::BOMD(Config *cfg, ElectronicSystem *system, HFsolver *solver):
     const Setting & root = m_cfg->getRoot();
     setNSteps(int(root["dynamicSettings"]["nSteps"]));
     setStepSize(double(root["dynamicSettings"]["stepSize"]));
-    setFrictionConstant(double(root["dynamicSettings"]["firctionConstant"]));
+    setFrictionConstant(double(root["dynamicSettings"]["frictionConstant"]));
 
-    string outputFilePath = root["analysisSettings"]["outputFilePath"];
     if(m_rank ==0){
-        m_outputManager = new FileManager(m_system->nAtoms(),m_nSteps, outputFilePath);
+        m_outputManager = new FileManager(m_cfg);
     }
 }
 
@@ -45,9 +44,9 @@ void BOMD::runDynamics()
             cout << "-------------------------------------------------------------------------------------"  << endl;
 
         }
+        systemProperties(i);
         solveSingleStep();
         writeLammpsFile(i);
-        systemProperties(i);
     }
 
     if(m_rank ==0){
@@ -78,7 +77,7 @@ void BOMD::halfKick()
     int i = 0;
     for(hf::Atom* atom : m_atoms){
         rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_stepSize
-                            * (m_energyGradient.row(i)/atom->coreMass()
+                            * (m_energyGradient.row(i)/(atom->coreMass() * PROTONMASS)
                             -  m_frictionConstant * atom->coreVelocity());
 
         atom->setCoreVelocity(coreVelocity);
@@ -92,10 +91,10 @@ void BOMD::systemProperties(int currentTimeStep)
 {
     int i = currentTimeStep;
     double t = i * m_stepSize;
-    double Epot = m_solver->energy();;
+    double Epot = m_solver->energy();
     double Ekin = 0;
     for (const hf::Atom* atom : m_atoms){
-        Ekin += 0.5 * atom->coreMass() * dot(atom->coreVelocity(),atom->coreVelocity());
+        Ekin += 0.5 * atom->coreMass() * PROTONMASS * dot(atom->coreVelocity(),atom->coreVelocity());
     }
 
     m_analyser->computeAtomicPartialCharge();
@@ -156,12 +155,13 @@ void BOMD::writeLammpsFile(int currentTimeStep) {
     ofstream lammpsFile(outStepName.str(), ios::out | ios::binary);
 
     // The system boundaries
-    double xMin = -5.0;
-    double xMax = 5.0;
-    double yMin = -5.0;
-    double yMax = 5.0;
-    double zMin = -5.0;
-    double zMax = 5.0;
+    double bound = 5.0;
+    double xMin = -bound;
+    double xMax = bound;
+    double yMin = -bound;
+    double yMax = bound;
+    double zMin = -bound;
+    double zMax = bound;
     // Shearing is zero unless the system boundaries are sheared (yes that's "sheared",
     // not "shared")
     double xShear = 0.0;

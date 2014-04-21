@@ -63,7 +63,7 @@ int main(int argc, char **argv)
         ElectronicSystem *system = new ElectronicSystem();
         system->addAtoms(atoms);
 
-//    ElectronicSystem *system = setupSystem("H2");
+//    ElectronicSystem *system = setupSystem("H4O2");
 
     //setup solver--------------------------------------------------------------------
     int solverMethod = root["solverSettings"]["method"];
@@ -145,9 +145,17 @@ ElectronicSystem* setupSystem(string name)
         atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_6-31Gds.tm", { -0.5, 0, 0 }));
         atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_6-31Gds.tm", { 0.2, 0, 0 }));
 
+    }else if(name =="H4O2"){
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", { -2.14, 3., 0 }));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", { -2.14,-3., 0 }));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", { 2.14, 3, 0 }));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", { 2.14, -3, 0 }));
+        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_STO-3G.tm", {-2.14, 0.0, 0.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_STO-3G.tm", { 2.14, 0.0, 0.0}));
+
     }else if(name =="HCl"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_17_basis_3-21G.tm", { -0.8, 0, 0 }));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", {   0.8, 0, 0 }));
+        atoms.push_back(new Atom("infiles/turbomole/atom_17_basis_3-21G.tm", { 0.0, 0, 0 }));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", {  2.408644745, 0, 0 }));
 
     }else if(name =="Li2"){
         atoms.push_back(new Atom("infiles/turbomole/atom_3_basis_3-21G.tm", {-2.5255, 0.0, 0.0}));

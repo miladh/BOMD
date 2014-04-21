@@ -17,7 +17,7 @@ namespace bomd{
 class FileManager
 {
 public:
-    FileManager(const int nAtoms, const int nSteps, const string &outputFilePath);
+    FileManager(Config *cfg);
 
     void writeToFile(const int state, vector<hf::Atom *> atoms, const double &kin, const double &pot, const double t);
     void closeOutput();
@@ -25,6 +25,7 @@ public:
 private:
     int m_rank;
     int m_nProcs;
+    Config* m_cfg;
     stringstream m_outputFileName;
 
 
@@ -38,15 +39,13 @@ private:
         double corePartialCharge;
     };
 
-
-
-
     H5File *m_output;
     AtomAttributes *m_atomAttributes;
     CompType *m_atomCompound;
     vector <DataSet *>m_dataset;
 
 
+    void initialize();
 };
 }
 #endif // FILEMANAGER_H
