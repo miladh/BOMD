@@ -1,7 +1,6 @@
 #include "bomd.h"
 
-
-using namespace hf;
+using namespace bomd;
 
 BOMD::BOMD(ElectronicSystem *system, HFsolver *solver):
     m_system(system),
@@ -9,16 +8,8 @@ BOMD::BOMD(ElectronicSystem *system, HFsolver *solver):
     m_atoms(system->atoms()),
     m_nAtoms(system->nAtoms())
 {
-    m_nSteps = 20;
-    m_dt   =  0.1;
-    m_frictionConstant = 0.0;
-
-    m_time = zeros(m_nSteps);
-    m_kineticEnergy = zeros(m_nSteps);
-    m_potentialEnergy = zeros(m_nSteps);
-    m_totalEnergy = zeros(m_nSteps);
-
     m_GD = new hf::GeometricalDerivative(m_system, m_solver);
+    m_analyser = new Analyser(m_system, m_solver);
 
     m_rank = 0;
 #if USE_MPI
@@ -27,6 +18,24 @@ BOMD::BOMD(ElectronicSystem *system, HFsolver *solver):
 #endif
 
 }
+
+BOMD::BOMD(Config *cfg, ElectronicSystem *system, HFsolver *solver):
+    BOMD(system, solver)
+{
+    m_cfg = cfg;
+    const Setting & root = m_cfg->getRoot();
+    setNSteps(int(root["dynamicSettings"]["nSteps"]));
+    setStepSize(double(root["dynamicSettings"]["stepSize"]));
+    setFrictionConstant(double(root["dynamicSettings"]["firctionConstant"]));
+
+    string outputFilePath = root["analysisSettings"]["outputFilePath"];
+    if(m_rank ==0){
+        m_outputManager = new FileManager(m_system->nAtoms(),m_nSteps, outputFilePath);
+    }
+}
+
+
+
 void BOMD::runDynamics()
 {
     computeForces();
@@ -36,12 +45,14 @@ void BOMD::runDynamics()
             cout << "-------------------------------------------------------------------------------------"  << endl;
 
         }
-
         solveSingleStep();
         writeLammpsFile(i);
         systemProperties(i);
     }
-    writeSystemProperties();
+
+    if(m_rank ==0){
+        m_outputManager->closeOutput();
+    }
 }
 
 
@@ -55,7 +66,7 @@ void BOMD::solveSingleStep()
 {
     halfKick();
     for(hf::Atom* atom : m_atoms){
-        rowvec corePosition = atom->corePosition() + m_dt * atom->coreVelocity();
+        rowvec corePosition = atom->corePosition() + m_stepSize * atom->coreVelocity();
         atom->setCorePosition(corePosition);
     }
     computeForces();
@@ -66,7 +77,7 @@ void BOMD::halfKick()
 {
     int i = 0;
     for(hf::Atom* atom : m_atoms){
-        rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_dt
+        rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_stepSize
                             * (m_energyGradient.row(i)/atom->coreMass()
                             -  m_frictionConstant * atom->coreVelocity());
 
@@ -80,13 +91,19 @@ void BOMD::halfKick()
 void BOMD::systemProperties(int currentTimeStep)
 {
     int i = currentTimeStep;
-    m_time(i)         = i * m_dt;
-    m_potentialEnergy(i) = m_solver->energy();
+    double t = i * m_stepSize;
+    double Epot = m_solver->energy();;
+    double Ekin = 0;
     for (const hf::Atom* atom : m_atoms){
-        m_kineticEnergy(i) += 0.5 * atom->coreMass() * dot(atom->coreVelocity(),atom->coreVelocity());
+        Ekin += 0.5 * atom->coreMass() * dot(atom->coreVelocity(),atom->coreVelocity());
     }
 
-    m_totalEnergy(i) = m_kineticEnergy(i) + m_potentialEnergy(i);
+    m_analyser->computeAtomicPartialCharge();
+    if(m_rank ==0){
+    m_outputManager->writeToFile(i,m_atoms, Ekin, Epot, t);
+    }
+
+
 }
 
 
@@ -95,28 +112,40 @@ double BOMD::potentialEnergy() const
     return m_solver->energy();
 }
 
+
 const mat& BOMD::energyGradient() const
 {
     return m_energyGradient;
 }
 
 
-void BOMD::writeSystemProperties()
+double BOMD::frictionConstant() const
 {
-    fstream output;
-    output.open ( "/home/milad/kurs/qmd/systemProperties/properties.txt",fstream::out);
-    output  << "Time    "  <<"Kinetic       "
-            << "Potential     " <<"Total Energy     "
-            <<endl;
+    return m_frictionConstant;
+}
 
-    for(int state = 0; state < m_nSteps; state++){
-        output << m_time(state)
-               <<"       "<< m_kineticEnergy(state)
-               <<"       "<< m_potentialEnergy(state)
-               <<"       "<< m_totalEnergy(state)
-               << endl;
-    }
-    output.close();
+void BOMD::setFrictionConstant(double frictionConstant)
+{
+    m_frictionConstant = frictionConstant;
+}
+
+double BOMD::stepSize() const
+{
+    return m_stepSize;
+}
+
+void BOMD::setStepSize(double stepSize)
+{
+    m_stepSize = stepSize;
+}
+int BOMD::nSteps() const
+{
+    return m_nSteps;
+}
+
+void BOMD::setNSteps(int nSteps)
+{
+    m_nSteps = nSteps;
 }
 
 

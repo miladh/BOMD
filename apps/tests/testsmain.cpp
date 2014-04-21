@@ -13,6 +13,7 @@
 using namespace std;
 using namespace arma;
 using namespace hf;
+using namespace bomd;
 
 int main(int argc, char **argv)
 {
@@ -55,18 +56,18 @@ SUITE(DEVELOPMENT){
         }
 
         //Initializing the system
-        vector<hf::Atom *> atoms;
+        vector<Atom *> atoms;
         atoms.push_back( new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", {-0.5, 0.0, 0.0}));
         atoms.push_back( new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", { 0.5, 0.0, 0.0}));
 
-        hf::ElectronicSystem *system = new ElectronicSystem ();
+        ElectronicSystem *system = new ElectronicSystem ();
         system->addAtoms(atoms);
 
-        hf::RHF *solver = new hf::RHF(system);
+        RHF *solver = new RHF(system);
         BOMD BOSolver(system, solver);
 
-        hf::Atom* atomA = atoms.at(0);
-        hf::Atom* atomB = atoms.at(1);
+        Atom* atomA = atoms.at(0);
+        Atom* atomB = atoms.at(1);
 
 
         //Domain

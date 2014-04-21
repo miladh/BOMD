@@ -5,15 +5,19 @@
 #include <armadillo>
 
 #include <hf.h>
+#include "../fileManager/filemanager.h"
 
 using namespace arma;
 using namespace std;
 using namespace hf;
 
+
+namespace bomd{
 class BOMD
 {
 public:
     BOMD(ElectronicSystem *system, HFsolver *solver);
+    BOMD(Config *cfg, ElectronicSystem *system, HFsolver *solver);
 
     void runDynamics();
     void computeForces();
@@ -21,25 +25,32 @@ public:
     const mat &energyGradient() const;
     double potentialEnergy() const;
 
+    double frictionConstant() const;
+    void setFrictionConstant(double frictionConstant);
+
+    double stepSize() const;
+    void setStepSize(double stepSize);
+
+    int nSteps() const;
+    void setNSteps(int nSteps);
+
 private:
-    hf::ElectronicSystem* m_system;
-    hf::HFsolver *m_solver;
-    hf::GeometricalDerivative* m_GD;
-    vector<hf::Atom *> m_atoms;
+    Config *m_cfg;
+    ElectronicSystem* m_system;
+    HFsolver *m_solver;
+    GeometricalDerivative* m_GD;
+    FileManager* m_outputManager;
+    Analyser* m_analyser;
+    vector<Atom *> m_atoms;
 
     int m_nAtoms;
-    int m_nSteps;
     int m_rank;
 
-    double m_dt;
-    double m_frictionConstant;
+    int m_nSteps = 0;
+    double m_stepSize = 0.1;
+    double m_frictionConstant = 0.0;
 
     mat m_energyGradient;
-
-    vec m_time;
-    vec m_totalEnergy;
-    vec m_kineticEnergy;
-    vec m_potentialEnergy;
 
 
     void solveSingleStep();
@@ -53,7 +64,7 @@ private:
 
     void systemProperties(int currentTimeStep);
 };
-
+}
 #endif // BOMD_H
 
 

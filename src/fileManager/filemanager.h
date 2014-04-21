@@ -17,17 +17,16 @@ namespace bomd{
 class FileManager
 {
 public:
-    FileManager(const int nAtoms, const string &outputFilePath);
+    FileManager(const int nAtoms, const int nSteps, const string &outputFilePath);
 
-    void saveAtoms(vector<hf::Atom *> atoms);
-    void saveEnergy(const double &energy, const mat &orbitalEnergies);
-    void saveDipoleMoment(const double &dipoleMoment);
+    void writeToFile(const int state, vector<hf::Atom *> atoms, const double &kin, const double &pot, const double t);
     void closeOutput();
 
 private:
     int m_rank;
     int m_nProcs;
     stringstream m_outputFileName;
+
 
     struct AtomAttributes {
         int type;
@@ -41,10 +40,13 @@ private:
 
 
 
+
     H5File *m_output;
-    CompType *m_atomCompound;
-    DataSet *m_dataset;
     AtomAttributes *m_atomAttributes;
+    CompType *m_atomCompound;
+    vector <DataSet *>m_dataset;
+
+
 };
 }
 #endif // FILEMANAGER_H

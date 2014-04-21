@@ -1,7 +1,7 @@
 #include "filemanager.h"
 
 using namespace bomd;
-FileManager::FileManager(const int nAtoms, const string& outputFilePath):
+FileManager::FileManager(const int nAtoms, const int nSteps, const string& outputFilePath):
     m_rank(0),
     m_nProcs(0)
 {
@@ -13,7 +13,7 @@ FileManager::FileManager(const int nAtoms, const string& outputFilePath):
     m_nProcs = world.size();
 #endif
 
-    m_outputFileName << outputFilePath << "/HFOutput_" << m_rank << ".h5";
+    m_outputFileName << outputFilePath << "/bomdOutput_" << m_rank << ".h5";
     m_output = new H5File (m_outputFileName.str(), H5F_ACC_TRUNC);
 
     //---------------------------------------------------------------------------------------------------------
@@ -25,18 +25,28 @@ FileManager::FileManager(const int nAtoms, const string& outputFilePath):
     m_atomCompound->insertMember("z", HOFFSET(AtomAttributes, z), PredType::NATIVE_DOUBLE);
     m_atomCompound->insertMember("core charge", HOFFSET(AtomAttributes, coreCharge), PredType::NATIVE_INT);
     m_atomCompound->insertMember("partial charge", HOFFSET(AtomAttributes, corePartialCharge), PredType::NATIVE_DOUBLE);
+   //---------------------------------------------------------------------------------------------------------
+
+   m_dataset.reserve(nSteps);
+   m_atomAttributes = new AtomAttributes[nAtoms];
 
    hsize_t dim[1];
    dim[0] = nAtoms;
    DataSpace space(1, dim);
-   m_dataset = new DataSet(m_output->createDataSet("atoms", *m_atomCompound, space));
-   m_atomAttributes = new AtomAttributes[nAtoms];
-   //---------------------------------------------------------------------------------------------------------
 
-
+   Group* group = new Group( m_output->createGroup( "/states" ));
+   for(int i = 0; i < nSteps; i++){
+       stringstream state;
+       state << "state" << setw(4) << setfill('0')  << i;
+       m_dataset.push_back(new DataSet(group->createDataSet(state.str(), *m_atomCompound, space)));
+   }
 }
 
-void FileManager::saveAtoms(vector<hf::Atom *> atoms)
+
+
+void FileManager::writeToFile(const int state, vector<hf::Atom *> atoms,
+                              const double& kin, const double& pot,
+                              const double t)
 {
 
     for(int i = 0; i < signed(atoms.size()); i++) {
@@ -48,37 +58,24 @@ void FileManager::saveAtoms(vector<hf::Atom *> atoms)
         m_atomAttributes[i].z = atom->corePosition()(2);
         m_atomAttributes[i].coreCharge = atom->coreCharge();
         m_atomAttributes[i].corePartialCharge = atom->corePartialCharge();
-        m_dataset->write(m_atomAttributes, *m_atomCompound);
     }
 
-}
+    m_dataset[state]->write(m_atomAttributes, *m_atomCompound);
 
-void FileManager::saveEnergy(const double& energy, const mat& orbitalEnergies)
-{
+    Attribute kinAtt(m_dataset[state]->createAttribute("kinetic energy", PredType::NATIVE_DOUBLE, H5S_SCALAR));
+    Attribute potAtt(m_dataset[state]->createAttribute("potential energy", PredType::NATIVE_DOUBLE, H5S_SCALAR));
+    Attribute EtotAtt(m_dataset[state]->createAttribute("total energy", PredType::NATIVE_DOUBLE, H5S_SCALAR));
+    Attribute timeAtt(m_dataset[state]->createAttribute("time", PredType::NATIVE_DOUBLE, H5S_SCALAR));
 
-    Attribute energyAttribute(m_dataset->createAttribute("energy", PredType::NATIVE_DOUBLE, H5S_SCALAR));
-    energyAttribute.write(PredType::NATIVE_DOUBLE, &energy);
+    double Etot = kin + pot;
+    kinAtt.write(PredType::NATIVE_DOUBLE, &kin);
+    potAtt.write(PredType::NATIVE_DOUBLE, &pot);
+    EtotAtt.write(PredType::NATIVE_DOUBLE, &Etot);
+    timeAtt.write(PredType::NATIVE_DOUBLE, &t);
 
-    hsize_t dim[2] = {orbitalEnergies.n_cols, orbitalEnergies.n_rows};
-    DataSpace space(2, dim);
-    DataSet dataset(m_output->createDataSet("orbital energies", PredType::NATIVE_DOUBLE, space));
-    dataset.write(orbitalEnergies.memptr(), PredType::NATIVE_DOUBLE);
-
-    if(orbitalEnergies.n_rows > 1){
-        string comment = " Col 0 is spin up, col 1 is spin down";
-        StrType vlst(0, H5T_VARIABLE);
-        Attribute attrConfigFilename = dataset.createAttribute("comment", vlst, DataSpace(H5S_SCALAR));
-        attrConfigFilename.write(vlst, comment);
-    }
-}
-
-void FileManager::saveDipoleMoment(const double& dipoleMoment)
-{
-
-    Attribute energyAttribute(m_dataset->createAttribute("dipole Moment", PredType::NATIVE_DOUBLE, H5S_SCALAR));
-    energyAttribute.write(PredType::NATIVE_DOUBLE, &dipoleMoment);
 
 }
+
 
 void FileManager::closeOutput()
 {
