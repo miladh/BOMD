@@ -42,6 +42,8 @@ int main(int argc, char **argv)
     const Setting &atomsMeta = root["chemicalSystem"]["atoms"];
     vector<Atom *> atoms;
 
+
+    if(atomsMeta.getLength() > 1){
     for(int i = 0; i < atomsMeta.getLength(); i++){
         const Setting &atomMeta = atomsMeta[i];
 
@@ -59,11 +61,19 @@ int main(int argc, char **argv)
 
         atoms.push_back(new Atom(basisFilePath.str(), position));
     }
-
+    }else{
+        bomd::Generator generator(&cfg);
+        generator.setLattice();
+        generator.setVelocity();
+        atoms = generator.atoms();
+    }
     ElectronicSystem *system = new ElectronicSystem();
     system->addAtoms(atoms);
 
 //    ElectronicSystem *system = setupSystem("H4O2");
+
+    //setup generator--------------------------------------------------------------------
+
 
     //setup solver--------------------------------------------------------------------
     int solverMethod = root["solverSettings"]["method"];
