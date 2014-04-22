@@ -16,7 +16,12 @@ bomd::Generator::Generator(Config *cfg):
     string basisFile;
     atomMeta[0].lookupValue("basis",basisFile);
     m_basisFilePath << "infiles/turbomole/"<< basisFile;
-    m_nAtoms = root["chemicalSystem"]["nAtoms"];
+
+
+    m_dr = root["generatorSettings"]["dr"];
+    m_Nx = root["generatorSettings"]["Nx"];
+    m_Ny = root["generatorSettings"]["Ny"];
+    m_Nz = root["generatorSettings"]["Nz"];
 }
 
 
@@ -41,17 +46,13 @@ void bomd::Generator::cubicLatticeGenerator()
 {
 
     rowvec dR = {0., 0., 0.};
-    rowvec dr = {2., 2., 2.};
+    rowvec dr = {m_dr,m_dr, m_dr};
 
-    int Nx = 2;
-    int Ny = 2;
-    int Nz = 2;
-
-    for (int nZ = 0; nZ < Nz; nZ++) {
+    for (int nZ = 0; nZ < m_Nz; nZ++) {
         dR[2] = nZ * dr[2];
-        for (int nY = 0; nY < Ny; nY++) {
+        for (int nY = 0; nY < m_Ny; nY++) {
             dR[1] = nY * dr[1];
-            for (int nX = 0; nX < Nx; nX++) {
+            for (int nX = 0; nX < m_Nx; nX++) {
                 dR[0] = nX * dr[0];
                 m_atoms.push_back(new Atom(m_basisFilePath.str(), dR));
             }
@@ -63,7 +64,7 @@ void bomd::Generator::cubicLatticeGenerator()
 void bomd::Generator::fccLatticeGenerator()
 {
     rowvec dR = {0., 0., 0.};
-    rowvec dr = {4., 4., 4.};
+    rowvec dr = {m_dr, m_dr, m_dr};
     mat origAtom= zeros<mat>(4,3);
 
 
@@ -73,15 +74,11 @@ void bomd::Generator::fccLatticeGenerator()
              << 0.5 << 0.0 << 0.5 << endr
              << 0.5 << 0.5 << 0.0 << endr;
 
-    int Nx = 2.;
-    int Ny = 1.;
-    int Nz = 1.;
-
-    for (int nZ = 0; nZ < Nz; nZ++) {
+    for (int nZ = 0; nZ < m_Nz; nZ++) {
         dR[2] = nZ * dr[2];
-        for (int nY = 0; nY < Ny; nY++) {
+        for (int nY = 0; nY < m_Ny; nY++) {
             dR[1] = nY * dr[1];
-            for (int nX = 0; nX < Nx; nX++) {
+            for (int nX = 0; nX < m_Nx; nX++) {
                 dR[0] = nX * dr[0];
                 for (int j=0; j < 4; j++) {
                     m_atoms.push_back(new Atom(m_basisFilePath.str(), dR + dr % origAtom.row(j)));
@@ -129,8 +126,6 @@ void bomd::Generator::setVelocity()
 
 
     //Removing initial linear momentum
-    sumVelocities/=m_nAtoms;
-    cout << sumVelocities << endl;
     for(Atom* atom : m_atoms){
         rowvec v = atom->coreVelocity();
         v -=sumVelocities;

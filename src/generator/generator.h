@@ -27,6 +27,8 @@ private:
     stringstream m_basisFilePath;
     int m_nAtoms;
     int m_rank;
+    int m_Nx, m_Ny, m_Nz;
+    double m_dr;
     long m_idum;
 
     void fccLatticeGenerator();
