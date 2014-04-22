@@ -54,15 +54,12 @@ private:
 
 
     void solveSingleStep();
-    void initialStep();
     void halfKick();
-    void updateCores();
-
-    void writeLammpsFile(int currentTimeStep);
-    void writeSystemProperties();
-
-
     void systemProperties(int currentTimeStep);
+    void freezeAtoms();
+
+    //    void writeLammpsFile(int currentTimeStep);
+    void boundaryCheck();
 };
 }
 #endif // BOMD_H

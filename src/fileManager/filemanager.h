@@ -11,21 +11,25 @@
 using namespace arma;
 using namespace std;
 using namespace H5;
+using namespace hf;
 
 namespace bomd{
 
 class FileManager
 {
 public:
-    FileManager(Config *cfg);
+    FileManager(Config *cfg, vector<Atom *> atoms);
 
-    void writeToFile(const int state, vector<hf::Atom *> atoms, const double &kin, const double &pot, const double t);
+    void writeToFile(const int state, const double &kin, const double &pot, const double t);
+    void writeLammpsFile(int currentTimeStep);
     void closeOutput();
 
 private:
+    Config* m_cfg;
+    vector<Atom *> m_atoms;
+    int m_nAtoms;
     int m_rank;
     int m_nProcs;
-    Config* m_cfg;
     stringstream m_outputFileName;
 
 
@@ -37,6 +41,7 @@ private:
         double z;
         int coreCharge;
         double corePartialCharge;
+        int frozen;
     };
 
     H5File *m_output;

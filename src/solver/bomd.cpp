@@ -29,10 +29,10 @@ BOMD::BOMD(Config *cfg, ElectronicSystem *system, HFsolver *solver):
     setFrictionConstant(double(root["dynamicSettings"]["frictionConstant"]));
 
     if(m_rank ==0){
-        m_outputManager = new FileManager(m_cfg);
+        m_outputManager = new FileManager(m_cfg, m_atoms);
     }
-}
 
+}
 
 
 void BOMD::runDynamics()
@@ -46,7 +46,6 @@ void BOMD::runDynamics()
         }
         systemProperties(i);
         solveSingleStep();
-        writeLammpsFile(i);
     }
 
     if(m_rank ==0){
@@ -65,22 +64,28 @@ void BOMD::solveSingleStep()
 {
     halfKick();
     for(hf::Atom* atom : m_atoms){
-        rowvec corePosition = atom->corePosition() + m_stepSize * atom->coreVelocity();
-        atom->setCorePosition(corePosition);
+        if(!atom->frozen()){
+            rowvec corePosition = atom->corePosition() + m_stepSize * atom->coreVelocity();
+            atom->setCorePosition(corePosition);
+        }
     }
     computeForces();
     halfKick();
+    boundaryCheck();
 }
 
 void BOMD::halfKick()
 {
     int i = 0;
     for(hf::Atom* atom : m_atoms){
+
+        if(!atom->frozen()){
         rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_stepSize
-                            * (m_energyGradient.row(i)/(atom->coreMass() * PROTONMASS)
-                            -  m_frictionConstant * atom->coreVelocity());
+                * (m_energyGradient.row(i)/(atom->coreMass() * PROTONMASS)
+                   -  m_frictionConstant * atom->coreVelocity());
 
         atom->setCoreVelocity(coreVelocity);
+        }
         i++;
     }
 
@@ -99,12 +104,29 @@ void BOMD::systemProperties(int currentTimeStep)
 
     m_analyser->computeAtomicPartialCharge();
     if(m_rank ==0){
-    m_outputManager->writeToFile(i,m_atoms, Ekin, Epot, t);
+        m_outputManager->writeToFile(i, Ekin, Epot, t);
     }
 
 
 }
 
+
+void BOMD::boundaryCheck()
+{
+    double lim = 10.0;
+    for(hf::Atom* atom : m_atoms){
+        rowvec corePosition = atom->corePosition();
+        rowvec coreVelocity = atom->coreVelocity();
+
+        for(int i = 0; i < 3; i++){
+            if( corePosition(i) > lim  || corePosition(i) < -lim){
+                coreVelocity(i) *= (-1);
+            }
+        }
+
+        atom->setCoreVelocity(coreVelocity);
+    }
+}
 
 double BOMD::potentialEnergy() const
 {
@@ -145,72 +167,5 @@ int BOMD::nSteps() const
 void BOMD::setNSteps(int nSteps)
 {
     m_nSteps = nSteps;
-}
-
-
-void BOMD::writeLammpsFile(int currentTimeStep) {
-
-    stringstream outStepName;
-    outStepName <<"/home/milad/kurs/qmd/state" << setw(4) << setfill('0')  << currentTimeStep <<".lmp";
-    ofstream lammpsFile(outStepName.str(), ios::out | ios::binary);
-
-    // The system boundaries
-    double bound = 5.0;
-    double xMin = -bound;
-    double xMax = bound;
-    double yMin = -bound;
-    double yMax = bound;
-    double zMin = -bound;
-    double zMax = bound;
-    // Shearing is zero unless the system boundaries are sheared (yes that's "sheared",
-    // not "shared")
-    double xShear = 0.0;
-    double yShear = 0.0;
-    double zShear = 0.0;
-    // nColumns is the number of data types you want to write. In our case we want to
-    // write four - the atom type and the x, y and z components of the position.
-    // If you want velocities, forces, etc., just add more columns and write more data.
-    int nColumns = 1 + 3 + 3 + 3;
-    // We could divide the data into chunks by the LAMMPS file format, but we don't - i.e. only
-    // use one chunk. The chunk length is then the same as the number of atoms times the number
-    // of columns.
-    int nChunks = 1;
-    int chunkLength = m_nAtoms * nColumns;
-
-    // Write all the above to the lammps file
-    lammpsFile.write(reinterpret_cast<const char*>(&currentTimeStep), sizeof(int));
-    lammpsFile.write(reinterpret_cast<const char*>(&m_nAtoms), sizeof(int));
-    lammpsFile.write(reinterpret_cast<const char*>(&xMin), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&xMax), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&yMin), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&yMax), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&zMin), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&zMax), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&xShear), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&yShear), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&zShear), sizeof(double));
-    lammpsFile.write(reinterpret_cast<const char*>(&nColumns), sizeof(int));
-    lammpsFile.write(reinterpret_cast<const char*>(&nChunks), sizeof(int));
-    lammpsFile.write(reinterpret_cast<const char*>(&chunkLength), sizeof(int));
-
-    // Write all the data for each atom to file
-    for(int i = 0; i < m_nAtoms; i++) {
-        double atomType = m_atoms[i]->atomType();
-        rowvec position = m_atoms[i]->corePosition();
-        rowvec velocity = m_atoms[i]->coreVelocity();
-
-        lammpsFile.write(reinterpret_cast<const char*>(&atomType), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&position(0)), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&position(1)), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&position(2)), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&velocity(0)), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&velocity(1)), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&velocity(2)), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&m_energyGradient(i,0)), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&m_energyGradient(i,1)), sizeof(double));
-        lammpsFile.write(reinterpret_cast<const char*>(&m_energyGradient(i,2)), sizeof(double));
-
-    }
-    lammpsFile.close();
 }
 
