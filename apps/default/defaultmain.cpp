@@ -66,6 +66,8 @@ int main(int argc, char **argv)
         generator.setLattice();
         generator.setVelocity();
         atoms = generator.atoms();
+
+
     }
     ElectronicSystem *system = new ElectronicSystem();
     system->addAtoms(atoms);
@@ -92,6 +94,12 @@ int main(int argc, char **argv)
         break;
     }
 
+
+//    field <mat> P;
+//    P.set_size(1,1);
+//    P(0) = randn(system->nBasisFunctions(),system->nBasisFunctions());
+//    solver->setInitialDensity(P);
+
     int maxNumOfIteration = root["solverSettings"]["maxNumOfIteration"];
     double dampingFactor = root["solverSettings"]["dampingFactor"];
 
@@ -110,8 +118,9 @@ int main(int argc, char **argv)
     //run solver--------------------------------------------------------------------
     if(world.rank()==0){
         cout << "---------------------------BOMD------------------------------"  << endl;
-        cout << "system:    " << chemicalSystem << endl;
-        cout << "method:    " << method << endl;
+        cout << "system:          " << chemicalSystem << endl;
+        cout << "method:          " << method << endl;
+        cout << "Number of atoms: " << atoms.size() << endl;
     }
 
 
