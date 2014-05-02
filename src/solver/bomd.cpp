@@ -74,7 +74,7 @@ void BOMD::solveSingleStep()
 
     for(hf::Atom* atom : m_atoms){
         if(!atom->frozen()){
-        rowvec coreVelocity = atom->coreVelocity() * m_frictionConstant;
+        rowvec coreVelocity = atom->coreVelocity() * (1.0 - m_frictionConstant);
         atom->setCoreVelocity(coreVelocity);
         }
     }
@@ -89,7 +89,7 @@ void BOMD::halfKick()
 
         if(!atom->frozen()){
         rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_stepSize
-                * m_energyGradient.row(i)/(atom->coreMass() * 1);
+                * m_energyGradient.row(i)/(atom->coreMass() * PROTONMASS);
 
         atom->setCoreVelocity(coreVelocity);
         }
@@ -106,7 +106,7 @@ void BOMD::systemProperties(int currentTimeStep)
     double Epot = m_solver->energy();
     double Ekin = 0;
     for (const hf::Atom* atom : m_atoms){
-        Ekin += 0.5 * atom->coreMass() * 1 * dot(atom->coreVelocity(),atom->coreVelocity());
+        Ekin += 0.5 * atom->coreMass() * PROTONMASS * dot(atom->coreVelocity(),atom->coreVelocity());
     }
 
     m_analyser->computeAtomicPartialCharge();
