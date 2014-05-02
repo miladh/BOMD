@@ -3,5 +3,6 @@ include(../apps_defaults.pri)
 
 TARGET = bomd_tests
 
-SOURCES = testsmain.cpp
+SOURCES = testsmain.cpp \
+    GDTests/gdTests.cpp
 

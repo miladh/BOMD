@@ -74,9 +74,6 @@ int main(int argc, char **argv)
 
 //    ElectronicSystem *system = setupSystem("H4O2");
 
-    //setup generator--------------------------------------------------------------------
-
-
     //setup solver--------------------------------------------------------------------
     int solverMethod = root["solverSettings"]["method"];
     HFsolver* solver;
@@ -99,6 +96,8 @@ int main(int argc, char **argv)
 //    P.set_size(1,1);
 //    P(0) = randn(system->nBasisFunctions(),system->nBasisFunctions());
 //    solver->setInitialDensity(P);
+
+//    solver->setDampingFactor(0.0);
 
     int maxNumOfIteration = root["solverSettings"]["maxNumOfIteration"];
     double dampingFactor = root["solverSettings"]["dampingFactor"];
