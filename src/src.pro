@@ -6,14 +6,14 @@ TARGET = ../lib/bomd
 
 
 SOURCES += \
-    solver/bomd.cpp \
     fileManager/filemanager.cpp \
-    generator/generator.cpp
+    generator/generator.cpp \
+    molecularSystem/molecularsystem.cpp
 
 HEADERS += \
-    solver/bomd.h \
     fileManager/filemanager.h \
-    generator/generator.h
+    generator/generator.h \
+    molecularSystem/molecularsystem.h
 
 OTHER_FILES += ../include/bomd.h ../install/include/bomd.h
 

@@ -46,7 +46,7 @@ SUITE(H2Tests){
         system->addAtoms(atoms);
 
         RHF *solver = new RHF(system);
-        BOMD BOSolver(system, solver);
+        MolecularSystem BOSolver(system, solver);
 
         Atom* atomA = atoms.at(0);
         Atom* atomB = atoms.at(1);
@@ -141,7 +141,7 @@ SUITE(H2Tests){
         system->addAtoms(atoms);
 
         RHF *solver = new RHF(system);
-        BOMD BOSolver(system, solver);
+        MolecularSystem BOSolver(system, solver);
 
         Atom* atomA = atoms.at(0);
         Atom* atomB = atoms.at(1);
@@ -236,7 +236,7 @@ SUITE(H2Tests){
 
         UHF *solver = new UHF(system);
         solver->setDampingFactor(0.0);
-        BOMD BOSolver(system, solver);
+        MolecularSystem BOSolver(system, solver);
 
         Atom* atomA = atoms.at(0);
         Atom* atomB = atoms.at(1);

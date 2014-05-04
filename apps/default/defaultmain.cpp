@@ -123,7 +123,7 @@ int main(int argc, char **argv)
     }
 
 
-    BOMD boSolver(&cfg, system, solver);
+    MolecularSystem boSolver(&cfg, system, solver);
     boSolver.runDynamics();
 
     //Save config file-------------------------------------------------------------------------

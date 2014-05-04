@@ -1,5 +1,5 @@
-#ifndef BOMD_H
-#define BOMD_H
+#ifndef MOLECULARSYSTEM_H
+#define MOLECULARSYSTEM_H
 
 #include <iostream>
 #include <armadillo>
@@ -13,11 +13,11 @@ using namespace hf;
 
 
 namespace bomd{
-class BOMD
+class MolecularSystem
 {
 public:
-    BOMD(ElectronicSystem *system, HFsolver *solver);
-    BOMD(Config *cfg, ElectronicSystem *system, HFsolver *solver);
+    MolecularSystem(ElectronicSystem *system, HFsolver *solver);
+    MolecularSystem(Config *cfg, ElectronicSystem *system, HFsolver *solver);
 
     void runDynamics();
     void computeForces();
@@ -62,6 +62,5 @@ private:
     void boundaryCheck();
 };
 }
-#endif // BOMD_H
-
+#endif // MOLECULARSYSTEM_H
 

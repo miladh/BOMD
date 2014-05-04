@@ -1,8 +1,8 @@
-#include "bomd.h"
+#include "molecularsystem.h"
 
 using namespace bomd;
 
-BOMD::BOMD(ElectronicSystem *system, HFsolver *solver):
+MolecularSystem::MolecularSystem(ElectronicSystem *system, HFsolver *solver):
     m_system(system),
     m_solver(solver),
     m_atoms(system->atoms()),
@@ -19,8 +19,8 @@ BOMD::BOMD(ElectronicSystem *system, HFsolver *solver):
 
 }
 
-BOMD::BOMD(Config *cfg, ElectronicSystem *system, HFsolver *solver):
-    BOMD(system, solver)
+MolecularSystem::MolecularSystem(Config *cfg, ElectronicSystem *system, HFsolver *solver):
+    MolecularSystem(system, solver)
 {
     m_cfg = cfg;
     const Setting & root = m_cfg->getRoot();
@@ -35,7 +35,7 @@ BOMD::BOMD(Config *cfg, ElectronicSystem *system, HFsolver *solver):
 }
 
 
-void BOMD::runDynamics()
+void MolecularSystem::runDynamics()
 {
     computeForces();
     for(int i = 0; i < m_nSteps; i++){
@@ -54,13 +54,13 @@ void BOMD::runDynamics()
 }
 
 
-void BOMD::computeForces()
+void MolecularSystem::computeForces()
 {
     m_solver->runSolver();
     m_energyGradient = -m_GD->energyGradient();
 }
 
-void BOMD::solveSingleStep()
+void MolecularSystem::solveSingleStep()
 {
     halfKick();
     for(hf::Atom* atom : m_atoms){
@@ -82,14 +82,14 @@ void BOMD::solveSingleStep()
     boundaryCheck();
 }
 
-void BOMD::halfKick()
+void MolecularSystem::halfKick()
 {
     int i = 0;
     for(hf::Atom* atom : m_atoms){
 
         if(!atom->frozen()){
         rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_stepSize
-                * m_energyGradient.row(i)/(atom->coreMass() * PROTONMASS);
+                * m_energyGradient.row(i)/(atom->coreMass() * 1836.152663302331);
 
         atom->setCoreVelocity(coreVelocity);
         }
@@ -99,7 +99,7 @@ void BOMD::halfKick()
 }
 
 
-void BOMD::systemProperties(int currentTimeStep)
+void MolecularSystem::systemProperties(int currentTimeStep)
 {
     int i = currentTimeStep;
     double t = i * m_stepSize;
@@ -118,7 +118,7 @@ void BOMD::systemProperties(int currentTimeStep)
 }
 
 
-void BOMD::boundaryCheck()
+void MolecularSystem::boundaryCheck()
 {
     double lim = 10.0;
     for(hf::Atom* atom : m_atoms){
@@ -135,43 +135,43 @@ void BOMD::boundaryCheck()
     }
 }
 
-double BOMD::potentialEnergy() const
+double MolecularSystem::potentialEnergy() const
 {
     return m_solver->energy();
 }
 
 
-const mat& BOMD::energyGradient() const
+const mat& MolecularSystem::energyGradient() const
 {
     return m_energyGradient;
 }
 
 
-double BOMD::frictionConstant() const
+double MolecularSystem::frictionConstant() const
 {
     return m_frictionConstant;
 }
 
-void BOMD::setFrictionConstant(double frictionConstant)
+void MolecularSystem::setFrictionConstant(double frictionConstant)
 {
     m_frictionConstant = frictionConstant;
 }
 
-double BOMD::stepSize() const
+double MolecularSystem::stepSize() const
 {
     return m_stepSize;
 }
 
-void BOMD::setStepSize(double stepSize)
+void MolecularSystem::setStepSize(double stepSize)
 {
     m_stepSize = stepSize;
 }
-int BOMD::nSteps() const
+int MolecularSystem::nSteps() const
 {
     return m_nSteps;
 }
 
-void BOMD::setNSteps(int nSteps)
+void MolecularSystem::setNSteps(int nSteps)
 {
     m_nSteps = nSteps;
 }
