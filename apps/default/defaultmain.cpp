@@ -15,6 +15,10 @@ enum solverMethod {
     rhf, uhf
 };
 
+enum modifier {
+    noModifier, friction
+};
+
 ElectronicSystem* setupSystem(string name);
 int main(int argc, char **argv)
 {
@@ -91,14 +95,6 @@ int main(int argc, char **argv)
         break;
     }
 
-
-//    field <mat> P;
-//    P.set_size(1,1);
-//    P(0) = randn(system->nBasisFunctions(),system->nBasisFunctions());
-//    solver->setInitialDensity(P);
-
-//    solver->setDampingFactor(0.0);
-
     int maxNumOfIteration = root["solverSettings"]["maxNumOfIteration"];
     double dampingFactor = root["solverSettings"]["dampingFactor"];
 
@@ -113,8 +109,6 @@ int main(int argc, char **argv)
     }
 
 
-
-    //run solver--------------------------------------------------------------------
     if(world.rank()==0){
         cout << "---------------------------BOMD------------------------------"  << endl;
         cout << "system:          " << chemicalSystem << endl;
@@ -122,9 +116,30 @@ int main(int argc, char **argv)
         cout << "Number of atoms: " << atoms.size() << endl;
     }
 
+    //setup bomd solver and modifiers--------------------------------------------------------------------
+    MolecularSystem molecularSystem(&cfg, system, solver);
+    int modifierType = root["modifierSettings"]["modifierType"];
+    switch (modifierType) {
+    case noModifier:
+        if(world.rank()==0){
+            cout << "No modifiers" <<endl;
+        }
+        break;
 
-    MolecularSystem boSolver(&cfg, system, solver);
-    boSolver.runDynamics();
+    case friction:
+        Friction* frictionMod;
+        frictionMod = new Friction(&molecularSystem);
+        frictionMod->setFrictionConstant(double(root["modifierSettings"]["frictionConstant"]));
+        molecularSystem.addModifiers(frictionMod);
+        if(world.rank()==0){
+            cout << " Friction" <<endl;
+        }
+        break;
+    }
+
+
+    //run solver--------------------------------------------------------------------
+    molecularSystem.runDynamics();
 
     //Save config file-------------------------------------------------------------------------
     if(world.rank() == 0 && int(root["fileManagerSettings"]["saveResults"])){
@@ -152,6 +167,7 @@ int main(int argc, char **argv)
     return 0;
 
 }
+
 
 
 

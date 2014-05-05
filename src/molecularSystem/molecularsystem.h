@@ -13,6 +13,8 @@ using namespace hf;
 
 
 namespace bomd{
+class Modifier;
+
 class MolecularSystem
 {
 public:
@@ -34,6 +36,11 @@ public:
     int nSteps() const;
     void setNSteps(int nSteps);
 
+    vector<Atom *> atoms() const;
+    void setAtoms(const vector<Atom *> &atoms);
+
+    void addModifiers(Modifier *modifier);
+
 private:
     Config *m_cfg;
     ElectronicSystem* m_system;
@@ -42,6 +49,7 @@ private:
     FileManager* m_outputManager;
     Analyser* m_analyser;
     vector<Atom *> m_atoms;
+    vector <Modifier*> m_modifiers;
 
     int m_nAtoms;
     int m_rank;
@@ -57,9 +65,8 @@ private:
     void halfKick();
     void systemProperties(int currentTimeStep);
     void freezeAtoms();
-
-    //    void writeLammpsFile(int currentTimeStep);
     void boundaryCheck();
+    void applyModifier();
 };
 }
 #endif // MOLECULARSYSTEM_H

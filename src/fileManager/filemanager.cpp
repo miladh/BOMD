@@ -42,7 +42,7 @@ void FileManager::initialize()
     const Setting & root = m_cfg->getRoot();
     int    nSteps = root["dynamicSettings"]["nSteps"];
     double stepSize = root["dynamicSettings"]["stepSize"];
-    double frictionConstant = double(root["dynamicSettings"]["frictionConstant"]);
+    double frictionConstant = double(root["modifierSettings"]["frictionConstant"]);
 
 
     Group rootGroup = m_output->openGroup("/");

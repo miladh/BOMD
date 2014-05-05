@@ -1,4 +1,5 @@
 #include "molecularsystem.h"
+#include "../modifier/modifier.h"
 
 using namespace bomd;
 
@@ -26,7 +27,6 @@ MolecularSystem::MolecularSystem(Config *cfg, ElectronicSystem *system, HFsolver
     const Setting & root = m_cfg->getRoot();
     setNSteps(int(root["dynamicSettings"]["nSteps"]));
     setStepSize(double(root["dynamicSettings"]["stepSize"]));
-    setFrictionConstant(double(root["dynamicSettings"]["frictionConstant"]));
 
     if(m_rank ==0){
         m_outputManager = new FileManager(m_cfg, m_atoms);
@@ -71,14 +71,7 @@ void MolecularSystem::solveSingleStep()
     }
     computeForces();
     halfKick();
-
-    for(hf::Atom* atom : m_atoms){
-        if(!atom->frozen()){
-        rowvec coreVelocity = atom->coreVelocity() * (1.0 - m_frictionConstant);
-        atom->setCoreVelocity(coreVelocity);
-        }
-    }
-
+    applyModifier();
     boundaryCheck();
 }
 
@@ -89,7 +82,7 @@ void MolecularSystem::halfKick()
 
         if(!atom->frozen()){
         rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_stepSize
-                * m_energyGradient.row(i)/(atom->coreMass() * 1836.152663302331);
+                * m_energyGradient.row(i)/(atom->coreMass() * PROTONMASS);
 
         atom->setCoreVelocity(coreVelocity);
         }
@@ -135,6 +128,20 @@ void MolecularSystem::boundaryCheck()
     }
 }
 
+
+
+void MolecularSystem::addModifiers(Modifier* modifier){
+    m_modifiers.push_back(modifier);
+
+}
+
+void MolecularSystem::applyModifier(){
+
+    for(Modifier* modifier: m_modifiers){
+        modifier->apply();
+    }
+}
+
 double MolecularSystem::potentialEnergy() const
 {
     return m_solver->energy();
@@ -175,4 +182,14 @@ void MolecularSystem::setNSteps(int nSteps)
 {
     m_nSteps = nSteps;
 }
+vector<Atom *> MolecularSystem::atoms() const
+{
+    return m_atoms;
+}
+
+void MolecularSystem::setAtoms(const vector<Atom *> &atoms)
+{
+    m_atoms = atoms;
+}
+
 
