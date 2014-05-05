@@ -16,7 +16,7 @@ enum solverMethod {
 };
 
 enum modifier {
-    noModifier, friction
+    noModifier, velocityRescaling
 };
 
 ElectronicSystem* setupSystem(string name);
@@ -126,10 +126,10 @@ int main(int argc, char **argv)
         }
         break;
 
-    case friction:
-        Friction* frictionMod;
-        frictionMod = new Friction(&molecularSystem);
-        frictionMod->setFrictionConstant(double(root["modifierSettings"]["frictionConstant"]));
+    case velocityRescaling:
+        VelocityRescaling* frictionMod;
+        frictionMod = new VelocityRescaling(&molecularSystem);
+        frictionMod->setRescalingFactor(double(root["modifierSettings"]["velocityRescalingFactor"]));
         molecularSystem.addModifiers(frictionMod);
         if(world.rank()==0){
             cout << " Friction" <<endl;

@@ -10,14 +10,14 @@ SOURCES += \
     generator/generator.cpp \
     molecularSystem/molecularsystem.cpp \
     modifier/modifier.cpp \
-    modifier/friction.cpp
+    modifier/velocityrescaling.cpp
 
 HEADERS += \
     fileManager/filemanager.h \
     generator/generator.h \
     molecularSystem/molecularsystem.h \
     modifier/modifier.h \
-    modifier/friction.h
+    modifier/velocityrescaling.h
 
 OTHER_FILES += ../include/bomd.h ../install/include/bomd.h
 

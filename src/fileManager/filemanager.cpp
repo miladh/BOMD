@@ -42,18 +42,18 @@ void FileManager::initialize()
     const Setting & root = m_cfg->getRoot();
     int    nSteps = root["dynamicSettings"]["nSteps"];
     double stepSize = root["dynamicSettings"]["stepSize"];
-    double frictionConstant = double(root["modifierSettings"]["frictionConstant"]);
+    double velocityRescalingFactor = double(root["modifierSettings"]["velocityRescalingFactor"]);
 
 
     Group rootGroup = m_output->openGroup("/");
     Attribute nAtoms_a(rootGroup.createAttribute("nAtoms", PredType::NATIVE_INT, H5S_SCALAR));
     Attribute nSteps_a(rootGroup.createAttribute("nSteps", PredType::NATIVE_INT, H5S_SCALAR));
     Attribute stepSize_a(rootGroup.createAttribute("stepSize", PredType::NATIVE_DOUBLE, H5S_SCALAR));
-    Attribute frictionConstant_a(rootGroup.createAttribute("frictionConstant", PredType::NATIVE_DOUBLE, H5S_SCALAR));
+    Attribute velocityRescalingFactor_a(rootGroup.createAttribute("velocityRescalingFactor", PredType::NATIVE_DOUBLE, H5S_SCALAR));
     nAtoms_a.write(PredType::NATIVE_INT, &m_nAtoms);
     nSteps_a.write(PredType::NATIVE_INT, &nSteps);
     stepSize_a.write(PredType::NATIVE_DOUBLE, &stepSize);
-    frictionConstant_a.write(PredType::NATIVE_DOUBLE, &frictionConstant);
+    velocityRescalingFactor_a.write(PredType::NATIVE_DOUBLE, &velocityRescalingFactor);
 
 
     m_dataset.reserve(nSteps);
