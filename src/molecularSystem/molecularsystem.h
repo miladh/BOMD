@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <armadillo>
-
 #include <hf.h>
 #include "../fileManager/filemanager.h"
 
@@ -21,25 +20,20 @@ public:
     MolecularSystem(ElectronicSystem *system, HFsolver *solver);
     MolecularSystem(Config *cfg, ElectronicSystem *system, HFsolver *solver);
 
+
     void runDynamics();
     void computeForces();
 
-    const mat &energyGradient() const;
-    double potentialEnergy() const;
-
-    double frictionConstant() const;
-    void setFrictionConstant(double frictionConstant);
-
-    double stepSize() const;
-    void setStepSize(double stepSize);
-
     int nSteps() const;
-    void setNSteps(int nSteps);
+    double stepSize() const;
+    double boxLength() const;
+    double potentialEnergy() const;
 
     vector<Atom *> atoms() const;
     void setAtoms(const vector<Atom *> &atoms);
 
     void addModifiers(Modifier *modifier);
+
 
 private:
     Config *m_cfg;
@@ -53,13 +47,11 @@ private:
 
     int m_nAtoms;
     int m_rank;
+    int m_boundaryCondition = 0;
 
     int m_nSteps = 0;
     double m_stepSize = 0.1;
-    double m_frictionConstant = 0.0;
-
-    mat m_energyGradient;
-
+    double m_boxLength;
 
     void solveSingleStep();
     void halfKick();
@@ -67,6 +59,7 @@ private:
     void freezeAtoms();
     void boundaryCheck();
     void applyModifier();
+    void minimumImageConvention();
 };
 }
 #endif // MOLECULARSYSTEM_H

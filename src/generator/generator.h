@@ -29,6 +29,7 @@ private:
     int m_rank;
     int m_Nx, m_Ny, m_Nz;
     double m_dr;
+    double m_boxLength;
     long m_idum;
 
     void fccLatticeGenerator();

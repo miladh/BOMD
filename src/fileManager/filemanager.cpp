@@ -127,13 +127,13 @@ void FileManager::writeLammpsFile(int currentTimeStep) {
     ofstream lammpsFile(fileName.str(), ios::out | ios::binary);
 
     // The system boundaries
-    double bound = 10.0;
-    double xMin = -bound;
-    double xMax = bound;
-    double yMin = -bound;
-    double yMax = bound;
-    double zMin = -bound;
-    double zMax = bound;
+    double boxLength = double(root["dynamicSettings"]["boxLength"]);
+    double xMin = 0.0;
+    double xMax = boxLength;
+    double yMin = 0.0;
+    double yMax = boxLength;
+    double zMin = 0.0;
+    double zMax = boxLength;
     // Shearing is zero unless the system boundaries are sheared (yes that's "sheared",
     // not "shared")
     double xShear = 0.0;

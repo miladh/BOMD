@@ -11,12 +11,14 @@ MolecularSystem::MolecularSystem(ElectronicSystem *system, HFsolver *solver):
 {
     m_GD = new hf::GeometricalDerivative(m_system, m_solver);
     m_analyser = new Analyser(m_system, m_solver);
+    m_boxLength =
 
     m_rank = 0;
 #if USE_MPI
     boost::mpi::communicator world;
     m_rank = world.rank();
 #endif
+
 
 }
 
@@ -25,8 +27,12 @@ MolecularSystem::MolecularSystem(Config *cfg, ElectronicSystem *system, HFsolver
 {
     m_cfg = cfg;
     const Setting & root = m_cfg->getRoot();
-    setNSteps(int(root["dynamicSettings"]["nSteps"]));
-    setStepSize(double(root["dynamicSettings"]["stepSize"]));
+
+    m_stepSize   = root["dynamicSettings"]["stepSize"];
+    m_nSteps     = root["dynamicSettings"]["nSteps"];
+    m_boxLength  = root["dynamicSettings"]["boxLength"];
+    m_boundaryCondition = root["dynamicSettings"]["BC"];
+
 
     if(m_rank ==0){
         m_outputManager = new FileManager(m_cfg, m_atoms);
@@ -56,8 +62,83 @@ void MolecularSystem::runDynamics()
 
 void MolecularSystem::computeForces()
 {
-    m_solver->runSolver();
-    m_energyGradient = -m_GD->energyGradient();
+    if(m_boundaryCondition == 2){
+        minimumImageConvention();
+    }
+    else{
+        m_solver->runSolver();
+        mat energyGradient = -m_GD->energyGradient();
+        for(int i = 0; i < m_nAtoms; i++){
+            m_atoms.at(i)->addForce(energyGradient.row(i));
+        }
+    }
+}
+
+
+void MolecularSystem::minimumImageConvention()
+{
+    mat m_corePostions = zeros(m_nAtoms, 3);
+    for(int i = 0; i < m_nAtoms; i++){
+        m_corePostions.row(i) = m_atoms.at(i)->corePosition();
+    }
+
+
+    cube dR = zeros(m_nAtoms, 3,  m_nAtoms);
+    for(int i = 0; i < m_nAtoms; i++){
+        for(int j = 0; j < m_nAtoms; j++){
+            const rowvec& dr = m_atoms.at(j)->corePosition() - m_atoms.at(i)->corePosition();
+
+            for(int k = 0; k < 3; k++){
+                dR.slice(i)(j,k) = dr(k)  - m_boxLength * round(dr(k) /m_boxLength);
+            }
+        }
+    }
+
+    for(int i = 0; i < m_nAtoms; i++){
+        for(int j = 0; j < m_nAtoms; j++){
+            rowvec pos =  m_corePostions.row(i) + dR.slice(i).row(j);
+            m_atoms.at(j)->setCorePosition(pos);
+        }
+        m_solver->runSolver();
+        m_atoms.at(i)->addForce(-m_GD->energyGradient().row(i));
+    }
+
+    for(int k = 0; k < m_nAtoms; k++){
+        m_atoms.at(k)->setCorePosition(m_corePostions.row(k));
+    }
+
+}
+
+
+void MolecularSystem::boundaryCheck()
+{
+
+    if(m_boundaryCondition == 0);
+
+    else if (m_boundaryCondition == 1){
+        for(hf::Atom* atom : m_atoms){
+            rowvec corePosition = atom->corePosition();
+            rowvec coreVelocity = atom->coreVelocity();
+
+            for(int i = 0; i < 3; i++){
+                if( corePosition(i) > m_boxLength  || corePosition(i) < 0){
+                    coreVelocity(i) *= (-1);
+                }
+            }
+            atom->setCoreVelocity(coreVelocity);
+        }
+    }
+    else if(m_boundaryCondition == 2){
+        for(hf::Atom* atom : m_atoms){
+            rowvec corePosition = atom->corePosition();
+            for(int i = 0; i < 3; i++){
+                corePosition(i) = fmod((corePosition(i) + 2 * m_boxLength), m_boxLength);
+            }
+
+            atom->setCorePosition(corePosition);
+        }
+    }
+
 }
 
 void MolecularSystem::solveSingleStep()
@@ -69,10 +150,10 @@ void MolecularSystem::solveSingleStep()
             atom->setCorePosition(corePosition);
         }
     }
+    boundaryCheck();
     computeForces();
     halfKick();
     applyModifier();
-    boundaryCheck();
 }
 
 void MolecularSystem::halfKick()
@@ -81,10 +162,10 @@ void MolecularSystem::halfKick()
     for(hf::Atom* atom : m_atoms){
 
         if(!atom->frozen()){
-        rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_stepSize
-                * m_energyGradient.row(i)/(atom->coreMass() * PROTONMASS);
+            rowvec coreVelocity = atom->coreVelocity() + 0.5 * m_stepSize
+                    * atom->force()/(atom->coreMass() * PROTONMASS);
 
-        atom->setCoreVelocity(coreVelocity);
+            atom->setCoreVelocity(coreVelocity);
         }
         i++;
     }
@@ -111,28 +192,16 @@ void MolecularSystem::systemProperties(int currentTimeStep)
 }
 
 
-void MolecularSystem::boundaryCheck()
-{
-    double lim = 10.0;
-    for(hf::Atom* atom : m_atoms){
-        rowvec corePosition = atom->corePosition();
-        rowvec coreVelocity = atom->coreVelocity();
-
-        for(int i = 0; i < 3; i++){
-            if( corePosition(i) > lim  || corePosition(i) < -lim){
-                coreVelocity(i) *= (-1);
-            }
-        }
-
-        atom->setCoreVelocity(coreVelocity);
-    }
-}
-
 
 
 void MolecularSystem::addModifiers(Modifier* modifier){
     m_modifiers.push_back(modifier);
 
+}
+
+double MolecularSystem::boxLength() const
+{
+    return m_boxLength;
 }
 
 void MolecularSystem::applyModifier(){
@@ -147,41 +216,16 @@ double MolecularSystem::potentialEnergy() const
     return m_solver->energy();
 }
 
-
-const mat& MolecularSystem::energyGradient() const
-{
-    return m_energyGradient;
-}
-
-
-double MolecularSystem::frictionConstant() const
-{
-    return m_frictionConstant;
-}
-
-void MolecularSystem::setFrictionConstant(double frictionConstant)
-{
-    m_frictionConstant = frictionConstant;
-}
-
 double MolecularSystem::stepSize() const
 {
     return m_stepSize;
 }
 
-void MolecularSystem::setStepSize(double stepSize)
-{
-    m_stepSize = stepSize;
-}
 int MolecularSystem::nSteps() const
 {
     return m_nSteps;
 }
 
-void MolecularSystem::setNSteps(int nSteps)
-{
-    m_nSteps = nSteps;
-}
 vector<Atom *> MolecularSystem::atoms() const
 {
     return m_atoms;

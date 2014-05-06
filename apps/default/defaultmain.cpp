@@ -44,6 +44,7 @@ int main(int argc, char **argv)
     //Setup system--------------------------------------------------------------------
     string chemicalSystem = root["chemicalSystem"]["name"];
     const Setting &atomsMeta = root["chemicalSystem"]["atoms"];
+    double boxLength = root["dynamicSettings"]["boxLength"];
     vector<Atom *> atoms;
 
 
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
             position[i] = pos[i];
         }
 
-        atoms.push_back(new Atom(basisFilePath.str(), position));
+        atoms.push_back(new Atom(basisFilePath.str(), position + boxLength/2.0));
     }
     }else{
         bomd::Generator generator(&cfg);
@@ -76,7 +77,7 @@ int main(int argc, char **argv)
     ElectronicSystem *system = new ElectronicSystem();
     system->addAtoms(atoms);
 
-//    ElectronicSystem *system = setupSystem("H4O2");
+//    ElectronicSystem *system = setupSystem("H2O");
 
     //setup solver--------------------------------------------------------------------
     int solverMethod = root["solverSettings"]["method"];

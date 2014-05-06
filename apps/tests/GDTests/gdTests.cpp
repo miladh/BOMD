@@ -66,8 +66,7 @@ SUITE(H2Tests){
             atomB->setCorePosition(X * 0.5);
             BOSolver.computeForces();
 
-            mat gradE = BOSolver.energyGradient();
-            gradient(x) = gradE(1,0);
+            gradient(x) = atomB->force()(0);
         }
 
         double h = 1.0E-7;
@@ -160,8 +159,7 @@ SUITE(H2Tests){
             atomB->setCorePosition(X * 0.5);
             BOSolver.computeForces();
 
-            mat gradE = BOSolver.energyGradient();
-            gradient(x) = gradE(1,0);
+            gradient(x) = atomB->force()(0);
         }
 
         double h = 1.0E-7;
@@ -254,8 +252,7 @@ SUITE(H2Tests){
             atomB->setCorePosition(X * 0.5);
             BOSolver.computeForces();
 
-            mat gradE = BOSolver.energyGradient();
-            gradient(x) = gradE(1,0);
+            gradient(x) = atomB->force()(0);
         }
 
         double h = 1.0E-7;

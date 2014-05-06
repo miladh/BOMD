@@ -80,39 +80,32 @@ SUITE(H2Tests){
 
         Atom* atomA = atoms.at(0);
         Atom* atomB = atoms.at(1);
-        mat gradE;
         rowvec pos;
 
         BOSolver.computeForces();
-        gradE = BOSolver.energyGradient();
-        double dE = gradE(0,0);
+//        double dE = atomA->coreAcceleration()(0);
         double E  = BOSolver.potentialEnergy();
 
 
         atomB->setCorePosition(X+h);
-        BOSolver.computeForces();
-        gradE = BOSolver.energyGradient();
-        double dEn = gradE(0,0);
+        double dEn =  atomA->force()(0);
         double En  = BOSolver.potentialEnergy();
 
 
 
         atomB->setCorePosition(X-h);
         BOSolver.computeForces();
-        gradE = BOSolver.energyGradient();
-        double dEp = gradE(0,0);
+        double dEp =  atomA->force()(0);
         double Ep = BOSolver.potentialEnergy();
 
 
         atomB->setCorePosition(X+2.0*h);
         BOSolver.computeForces();
-        gradE = BOSolver.energyGradient();
-        double dEnn = gradE(0,0);
+        double dEnn = atomA->force()(0);
 
         atomB->setCorePosition(X-2.0*h);
         BOSolver.computeForces();
-        gradE = BOSolver.energyGradient();
-        double dEpp = gradE(0,0);
+        double dEpp =  atomA->force()(0);
 
         double k = (-dEnn + 8. * dEn - 8. * dEp + dEpp) / (12.0 * h(0));
         double ke = (En - 2.* E + Ep)/(h(0)*h(0));

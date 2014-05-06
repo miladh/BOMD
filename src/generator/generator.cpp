@@ -22,6 +22,7 @@ bomd::Generator::Generator(Config *cfg):
     m_Nx = root["generatorSettings"]["Nx"];
     m_Ny = root["generatorSettings"]["Ny"];
     m_Nz = root["generatorSettings"]["Nz"];
+    m_boxLength = root["dynamicSettings"]["boxLength"];
 }
 
 
@@ -49,11 +50,11 @@ void bomd::Generator::cubicLatticeGenerator()
     rowvec dr = {m_dr,m_dr, m_dr};
 
     for (int nZ = 0; nZ < m_Nz; nZ++) {
-        dR[2] = nZ * dr[2];
+        dR[2] = nZ * dr[2] + m_boxLength * 0.5;
         for (int nY = 0; nY < m_Ny; nY++) {
-            dR[1] = nY * dr[1];
+            dR[1] = nY * dr[1]+ m_boxLength * 0.5;
             for (int nX = 0; nX < m_Nx; nX++) {
-                dR[0] = nX * dr[0];
+                dR[0] = nX * dr[0]+ m_boxLength * 0.5;
                 m_atoms.push_back(new Atom(m_basisFilePath.str(), dR));
             }
         }
