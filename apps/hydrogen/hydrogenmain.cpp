@@ -19,7 +19,6 @@ enum modifier {
     noModifier, velocityRescaling
 };
 
-ElectronicSystem* setupSystem(string name, double boxLength);
 int main(int argc, char **argv)
 {
 
@@ -36,7 +35,7 @@ int main(int argc, char **argv)
         if(p != world.rank()) {
             continue;
         }
-        cfg.readFile("../../../bomd/apps/default/defaultConfig.cfg");
+        cfg.readFile("../../../bomd/apps/hydrogen/hydrogenConfig.cfg");
     }
     const Setting & root = cfg.getRoot();
 
@@ -55,29 +54,30 @@ int main(int argc, char **argv)
         string basisFile;
         stringstream basisFilePath;
         rowvec position = zeros<rowvec>(3);
+        rowvec velocity = zeros<rowvec>(3);
 
         atomMeta.lookupValue("basis",basisFile);
         basisFilePath << "infiles/turbomole/"<< basisFile;
 
         const Setting &pos =  atomMeta["position"];
+        const Setting &vel =  atomMeta["velocity"];
         for(int i =0; i < 3; i++){
             position[i] = pos[i];
+            velocity[i] = vel[i];
         }
 
-        atoms.push_back(new Atom(basisFilePath.str(), position + boxLength/2.0));
+        atoms.push_back(new Atom(basisFilePath.str(), position));
+        atoms.at(atoms.size()-1)->setCoreVelocity(velocity);
     }
+
     }else{
         bomd::Generator generator(&cfg);
         generator.setLattice();
         generator.setVelocity();
         atoms = generator.atoms();
-
-
     }
-//    ElectronicSystem *system = new ElectronicSystem();
-//    system->addAtoms(atoms);
-
-    ElectronicSystem *system = setupSystem("CH4", boxLength);
+    ElectronicSystem *system = new ElectronicSystem();
+    system->addAtoms(atoms);
 
     //setup solver--------------------------------------------------------------------
     int solverMethod = root["solverSettings"]["method"];
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
     if(world.rank() == 0 && int(root["fileManagerSettings"]["saveResults"])){
         string outputFilePath = root["fileManagerSettings"]["outputFilePath"];
         stringstream copyCommand;
-        copyCommand << "cp ../../../bomd/apps/default/defaultConfig.cfg" << " " << outputFilePath;
+        copyCommand << "cp ../../../bomd/apps/hydrogen/hydrogenConfig.cfg" << " " << outputFilePath;
         const char* command = new char[sizeof(copyCommand)];
         command = (copyCommand.str()).c_str();
 
@@ -169,67 +169,4 @@ int main(int argc, char **argv)
 
 }
 
-
-
-
-ElectronicSystem* setupSystem(string name, double boxLength)
-{
-    vector<Atom *> atoms;
-
-    if(name =="H2"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_6-31Gds.tm", { -0.5, 0, 0 }));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_6-31Gds.tm", { 0.2, 0, 0 }));
-
-    }else if(name =="H4O2"){
-        double D  = 7.;
-        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_STO-3G.tm", {0.000, 0.000, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {2.797, 0.000, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-0.45, 1.74, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_STO-3G.tm", {D, D, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {D+2.797, D, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-0.45 + D, 1.74 + D, 0.0}));
-
-    }else if(name =="HCl"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_17_basis_3-21G.tm", { 0.0, 0, 0 }));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", {  2.408644745, 0, 0 }));
-
-    }else if(name =="Li2"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_3_basis_3-21G.tm", {-2.5255, 0.0, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_3_basis_3-21G.tm", { 2.5255, 0.0, 0.0}));
-
-    }else if(name =="O2"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_3-21G.tm", {-2.14, 0.0, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_3-21G.tm", { 2.14, 0.0, 0.0}));
-
-    }else if(name =="H2O"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_3-21G.tm", { 0.0, 0.0, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", {2.797, 0.0, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", { -1.797*cos((180-104.45) *M_PI/180.0),
-                                                                              1.7401532877550183, 0.0}));
-    }else if(name =="CO2"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_3-21G.tm", {-2.185, 0.0, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_3-21G.tm", { 2.185, 0.0, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_3-21G.tm", { 0.0, 0.0, 0.0}));
-
-    }else if(name =="CH4"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_STO-3G.tm", {0.0+ boxLength/2.0, 0.0+ boxLength/2.0, 0.0+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {1.0470971705+ boxLength/2.0, 1.5110249008+ boxLength/2.0, 0.9382489535+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {1.2912497683+ boxLength/2.0, -1.5371031195+ boxLength/2.0, -0.4792345108+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-1.4705847646+ boxLength/2.0, -0.7058126569+ boxLength/2.0, 1.2646046318+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-0.8679511467+ boxLength/2.0, 0.7320798481+ boxLength/2.0, -1.7236190746+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_anion_basis_STO-3G.tm", {-5.0+ boxLength/2.0 ,-5+ boxLength/2.0 , -5+boxLength/2.0}));
-        rowvec v = {0.01, 0.01, 0.01};
-        atoms.at(5)->setCoreVelocity(v);
-    }else{
-        cerr << "unknown system!" << endl;
-        exit(0);
-    }
-
-    ElectronicSystem *system = new ElectronicSystem();
-    system->addAtoms(atoms);
-
-    return system;
-
-
-}
 

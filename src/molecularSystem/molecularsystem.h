@@ -50,6 +50,7 @@ private:
     int m_boundaryCondition = 0;
 
     int m_nSteps = 0;
+    int m_MDstep = 0;
     double m_stepSize = 0.1;
     double m_boxLength;
 

@@ -52,6 +52,7 @@ void MolecularSystem::runDynamics()
         }
         systemProperties(i);
         solveSingleStep();
+        m_MDstep = i;
     }
 
     if(m_rank ==0){
@@ -99,6 +100,15 @@ void MolecularSystem::minimumImageConvention()
             rowvec pos =  m_corePostions.row(i) + dR.slice(i).row(j);
             m_atoms.at(j)->setCorePosition(pos);
         }
+
+        if(m_MDstep == 0){
+            field<mat> P;
+            P.set_size(1,1);
+            P(0) = randn(m_system->nBasisFunctions(), m_system->nBasisFunctions());
+            m_solver->setInitialDensity(P);
+        }
+
+
         m_solver->runSolver();
         m_atoms.at(i)->addForce(-m_GD->energyGradient().row(i));
     }
@@ -153,7 +163,9 @@ void MolecularSystem::solveSingleStep()
     boundaryCheck();
     computeForces();
     halfKick();
-    applyModifier();
+    if(m_MDstep > 170.0){
+        applyModifier();
+    }
 }
 
 void MolecularSystem::halfKick()
