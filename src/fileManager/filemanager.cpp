@@ -42,16 +42,19 @@ void FileManager::initialize()
     const Setting & root = m_cfg->getRoot();
     int    nSteps = root["dynamicSettings"]["nSteps"];
     double stepSize = root["dynamicSettings"]["stepSize"];
+    double boxLength = root["dynamicSettings"]["boxLength"];
     double velocityRescalingFactor = double(root["modifierSettings"]["velocityRescalingFactor"]);
 
 
     Group rootGroup = m_output->openGroup("/");
     Attribute nAtoms_a(rootGroup.createAttribute("nAtoms", PredType::NATIVE_INT, H5S_SCALAR));
     Attribute nSteps_a(rootGroup.createAttribute("nSteps", PredType::NATIVE_INT, H5S_SCALAR));
+    Attribute boxLength_a(rootGroup.createAttribute("boxLength", PredType::NATIVE_DOUBLE, H5S_SCALAR));
     Attribute stepSize_a(rootGroup.createAttribute("stepSize", PredType::NATIVE_DOUBLE, H5S_SCALAR));
     Attribute velocityRescalingFactor_a(rootGroup.createAttribute("velocityRescalingFactor", PredType::NATIVE_DOUBLE, H5S_SCALAR));
     nAtoms_a.write(PredType::NATIVE_INT, &m_nAtoms);
     nSteps_a.write(PredType::NATIVE_INT, &nSteps);
+    boxLength_a.write(PredType::NATIVE_DOUBLE, &boxLength);
     stepSize_a.write(PredType::NATIVE_DOUBLE, &stepSize);
     velocityRescalingFactor_a.write(PredType::NATIVE_DOUBLE, &velocityRescalingFactor);
 
@@ -85,6 +88,9 @@ void FileManager::writeToFile(const int state,
         m_atomAttributes[i].x = atom->corePosition()(0);
         m_atomAttributes[i].y = atom->corePosition()(1);
         m_atomAttributes[i].z = atom->corePosition()(2);
+        m_atomAttributes[i].vx = atom->coreVelocity()(0);
+        m_atomAttributes[i].vy = atom->coreVelocity()(1);
+        m_atomAttributes[i].vz = atom->coreVelocity()(2);
         m_atomAttributes[i].coreCharge = atom->coreCharge();
         m_atomAttributes[i].corePartialCharge = atom->corePartialCharge();
         m_atomAttributes[i].frozen = int(atom->frozen());

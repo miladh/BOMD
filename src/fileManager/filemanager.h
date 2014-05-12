@@ -39,6 +39,9 @@ private:
         double x;
         double y;
         double z;
+        double vx;
+        double vy;
+        double vz;
         int coreCharge;
         double corePartialCharge;
         int frozen;

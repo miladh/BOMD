@@ -101,14 +101,6 @@ void MolecularSystem::minimumImageConvention()
             m_atoms.at(j)->setCorePosition(pos);
         }
 
-        if(m_MDstep == 0){
-            field<mat> P;
-            P.set_size(1,1);
-            P(0) = randn(m_system->nBasisFunctions(), m_system->nBasisFunctions());
-            m_solver->setInitialDensity(P);
-        }
-
-
         m_solver->runSolver();
         m_atoms.at(i)->addForce(-m_GD->energyGradient().row(i));
     }
@@ -163,9 +155,7 @@ void MolecularSystem::solveSingleStep()
     boundaryCheck();
     computeForces();
     halfKick();
-    if(m_MDstep > 170.0){
-        applyModifier();
-    }
+    applyModifier();
 }
 
 void MolecularSystem::halfKick()
@@ -216,8 +206,8 @@ double MolecularSystem::boxLength() const
     return m_boxLength;
 }
 
-void MolecularSystem::applyModifier(){
-
+void MolecularSystem::applyModifier()
+{
     for(Modifier* modifier: m_modifiers){
         modifier->apply();
     }

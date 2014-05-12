@@ -55,16 +55,19 @@ int main(int argc, char **argv)
         string basisFile;
         stringstream basisFilePath;
         rowvec position = zeros<rowvec>(3);
-
+        rowvec velocity = zeros<rowvec>(3);
         atomMeta.lookupValue("basis",basisFile);
         basisFilePath << "infiles/turbomole/"<< basisFile;
 
         const Setting &pos =  atomMeta["position"];
+        const Setting &vel =  atomMeta["velocity"];
         for(int i =0; i < 3; i++){
             position[i] = pos[i];
+            velocity[i] = vel[i];
         }
 
         atoms.push_back(new Atom(basisFilePath.str(), position + boxLength/2.0));
+        atoms.at(atoms.size()-1)->setCoreVelocity(velocity);
     }
     }else{
         bomd::Generator generator(&cfg);
@@ -74,10 +77,16 @@ int main(int argc, char **argv)
 
 
     }
-//    ElectronicSystem *system = new ElectronicSystem();
-//    system->addAtoms(atoms);
+    ElectronicSystem *system = new ElectronicSystem();
+    system->addAtoms(atoms);
 
-    ElectronicSystem *system = setupSystem("CH4", boxLength);
+    int nSpinUpElectrons = root["chemicalSystem"]["nSpinUpElectrons"];
+    int nSpinDownElectrons = root["chemicalSystem"]["nSpinDownElectrons"];
+    if(nSpinUpElectrons!=0 && nSpinDownElectrons!=0){
+        system->setNSpinUpAndDownElectrons(nSpinUpElectrons,nSpinDownElectrons);
+    }
+
+//    ElectronicSystem *system = setupSystem("CH5", boxLength);
 
     //setup solver--------------------------------------------------------------------
     int solverMethod = root["solverSettings"]["method"];
@@ -172,10 +181,11 @@ int main(int argc, char **argv)
 
 
 
+
 ElectronicSystem* setupSystem(string name, double boxLength)
 {
     vector<Atom *> atoms;
-
+    double dR = boxLength * 0.5;
     if(name =="H2"){
         atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_6-31Gds.tm", { -0.5, 0, 0 }));
         atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_6-31Gds.tm", { 0.2, 0, 0 }));
@@ -212,17 +222,37 @@ ElectronicSystem* setupSystem(string name, double boxLength)
         atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_3-21G.tm", { 0.0, 0.0, 0.0}));
 
     }else if(name =="CH4"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_STO-3G.tm", {0.0+ boxLength/2.0, 0.0+ boxLength/2.0, 0.0+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {1.0470971705+ boxLength/2.0, 1.5110249008+ boxLength/2.0, 0.9382489535+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {1.2912497683+ boxLength/2.0, -1.5371031195+ boxLength/2.0, -0.4792345108+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-1.4705847646+ boxLength/2.0, -0.7058126569+ boxLength/2.0, 1.2646046318+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-0.8679511467+ boxLength/2.0, 0.7320798481+ boxLength/2.0, -1.7236190746+ boxLength/2.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_anion_basis_STO-3G.tm", {-5.0+ boxLength/2.0 ,-5+ boxLength/2.0 , -5+boxLength/2.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_STO-3G.tm", {-0.005470000000000752,   0.19490000000000052, 0.44761761}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-1.5971100000000007, 1.2072000000000003, 1.70468761}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {1.6623,  1.1157299999999992, 1.70468761}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {0.0, 0.0, 3.69872351}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {0.0, 0.0, 5.04472351}));
+        rowvec v = {0., 0., -0.00139961614777*2.0};
+        atoms.at(4)->setCoreVelocity(v);
+//        atoms.at(3)->setCoreVelocity(v);
+
+
+
+
+
+    }else if(name =="CH5"){
+        double B = 2.047;
+        atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_STO-3G.tm", {0.0, 0.0, 0.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {B/sqrt(3), B/sqrt(3), B/sqrt(3)}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-B/sqrt(3), -B/sqrt(3), B/sqrt(3)}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {B/sqrt(3), -B/sqrt(3), -B/sqrt(3)}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-B/sqrt(3), B/sqrt(3), -B/sqrt(3)}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_anion_basis_STO-3G.tm", {-5.0 ,-5 , -5}));
         rowvec v = {0.01, 0.01, 0.01};
         atoms.at(5)->setCoreVelocity(v);
     }else{
         cerr << "unknown system!" << endl;
         exit(0);
+    }
+
+    for(Atom* atom: atoms){
+        rowvec pos = atom->corePosition() + boxLength * 0.5;
+        atom->setCorePosition(pos);
     }
 
     ElectronicSystem *system = new ElectronicSystem();
