@@ -29,6 +29,9 @@ FileManager::FileManager(Config *cfg, vector<Atom *> atoms):
     m_atomCompound->insertMember("x", HOFFSET(AtomAttributes, x), PredType::NATIVE_DOUBLE);
     m_atomCompound->insertMember("y", HOFFSET(AtomAttributes, y), PredType::NATIVE_DOUBLE);
     m_atomCompound->insertMember("z", HOFFSET(AtomAttributes, z), PredType::NATIVE_DOUBLE);
+    m_atomCompound->insertMember("vx", HOFFSET(AtomAttributes, vx), PredType::NATIVE_DOUBLE);
+    m_atomCompound->insertMember("vy", HOFFSET(AtomAttributes, vy), PredType::NATIVE_DOUBLE);
+    m_atomCompound->insertMember("vz", HOFFSET(AtomAttributes, vz), PredType::NATIVE_DOUBLE);
     m_atomCompound->insertMember("core charge", HOFFSET(AtomAttributes, coreCharge), PredType::NATIVE_INT);
     m_atomCompound->insertMember("partial charge", HOFFSET(AtomAttributes, corePartialCharge), PredType::NATIVE_DOUBLE);
     m_atomCompound->insertMember("frozen", HOFFSET(AtomAttributes, frozen), PredType::NATIVE_INT);
@@ -80,8 +83,8 @@ void FileManager::writeToFile(const int state,
                               const double& pot,
                               const double t)
 {
-
     for(int i = 0; i < m_nAtoms; i++) {
+
         hf::Atom* atom = m_atoms.at(i);
         strcpy(m_atomAttributes[i].basisType, atom->basisType().c_str());
         m_atomAttributes[i].type = atom->atomType();
