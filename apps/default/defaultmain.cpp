@@ -28,6 +28,7 @@ int main(int argc, char **argv)
     boost::mpi::timer timer;
     timer.restart();
 
+
     //read config file---------------------------------------------------------------
     Config cfg;
     for(int p = 0; p < world.size(); p++) {
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
     const Setting &atomsMeta = root["chemicalSystem"]["atoms"];
     double boxLength = root["dynamicSettings"]["boxLength"];
     vector<Atom *> atoms;
-
+    bomd::Generator generator(&cfg, &atoms);
 
     if(atomsMeta.getLength() > 1){
     for(int i = 0; i < atomsMeta.getLength(); i++){
@@ -70,23 +71,20 @@ int main(int argc, char **argv)
         atoms.at(atoms.size()-1)->setCoreVelocity(velocity);
     }
     }else{
-        bomd::Generator generator(&cfg);
         generator.setLattice();
-        generator.setVelocity();
-        atoms = generator.atoms();
-
-
     }
+//    generator.setVelocity();
+
+
     ElectronicSystem *system = new ElectronicSystem();
     system->addAtoms(atoms);
-
     int nSpinUpElectrons = root["chemicalSystem"]["nSpinUpElectrons"];
     int nSpinDownElectrons = root["chemicalSystem"]["nSpinDownElectrons"];
     if(nSpinUpElectrons!=0 && nSpinDownElectrons!=0){
         system->setNSpinUpAndDownElectrons(nSpinUpElectrons,nSpinDownElectrons);
     }
 
-//    ElectronicSystem *system = setupSystem("CH5", boxLength);
+//    ElectronicSystem *system = setupSystem("CH4", boxLength);
 
     //setup solver--------------------------------------------------------------------
     int solverMethod = root["solverSettings"]["method"];
@@ -212,9 +210,9 @@ ElectronicSystem* setupSystem(string name, double boxLength)
         atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_3-21G.tm", { 2.14, 0.0, 0.0}));
 
     }else if(name =="H2O"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_3-21G.tm", { 0.0, 0.0, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", {2.797, 0.0, 0.0}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_3-21G.tm", { -1.797*cos((180-104.45) *M_PI/180.0),
+        atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_STO-3G.tm", { 0.0, 0.0, 0.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {2.797, 0.0, 0.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", { -1.797*cos((180-104.45) *M_PI/180.0),
                                                                               1.7401532877550183, 0.0}));
     }else if(name =="CO2"){
         atoms.push_back(new Atom("infiles/turbomole/atom_8_basis_3-21G.tm", {-2.185, 0.0, 0.0}));
@@ -222,14 +220,11 @@ ElectronicSystem* setupSystem(string name, double boxLength)
         atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_3-21G.tm", { 0.0, 0.0, 0.0}));
 
     }else if(name =="CH4"){
-        atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_STO-3G.tm", {-0.005470000000000752,   0.19490000000000052, 0.44761761}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-1.5971100000000007, 1.2072000000000003, 1.70468761}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {1.6623,  1.1157299999999992, 1.70468761}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {0.0, 0.0, 3.69872351}));
-        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {0.0, 0.0, 5.04472351}));
-        rowvec v = {0., 0., -0.00139961614777*2.0};
-        atoms.at(4)->setCoreVelocity(v);
-//        atoms.at(3)->setCoreVelocity(v);
+        atoms.push_back(new Atom("infiles/turbomole/atom_6_basis_STO-3G.tm", {0.0, 0.0 ,0.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {2.0, 0.0 ,0.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {-2.0, 0.0 ,0.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {0.0, 2.0 ,0.0}));
+        atoms.push_back(new Atom("infiles/turbomole/atom_1_basis_STO-3G.tm", {0.0, -2.0 ,0.0}));
 
 
 

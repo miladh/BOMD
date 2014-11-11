@@ -1,8 +1,9 @@
 #include "generator.h"
 
 
-bomd::Generator::Generator(Config *cfg):
+bomd::Generator::Generator(Config *cfg, vector<Atom*>* atoms):
     m_cfg(cfg),
+    m_atoms(atoms),
     m_rank(0)
 {
     m_rank = 0;
@@ -23,6 +24,7 @@ bomd::Generator::Generator(Config *cfg):
     m_Ny = root["generatorSettings"]["Ny"];
     m_Nz = root["generatorSettings"]["Nz"];
     m_boxLength = root["dynamicSettings"]["boxLength"];
+    m_temperature = root["generatorSettings"]["temperature"];
 }
 
 
@@ -55,7 +57,7 @@ void bomd::Generator::cubicLatticeGenerator()
             dR[1] = nY * dr[1]+ m_boxLength * 0.5;
             for (int nX = 0; nX < m_Nx; nX++) {
                 dR[0] = nX * dr[0]+ m_boxLength * 0.5;
-                m_atoms.push_back(new Atom(m_basisFilePath.str(), dR));
+                m_atoms->push_back(new Atom(m_basisFilePath.str(), dR));
             }
         }
     }
@@ -82,7 +84,7 @@ void bomd::Generator::fccLatticeGenerator()
             for (int nX = 0; nX < m_Nx; nX++) {
                 dR[0] = nX * dr[0];
                 for (int j=0; j < 4; j++) {
-                    m_atoms.push_back(new Atom(m_basisFilePath.str(), dR + dr % origAtom.row(j)));
+                    m_atoms->push_back(new Atom(m_basisFilePath.str(), dR + dr % origAtom.row(j)));
                 }
             }
         }
@@ -92,7 +94,7 @@ void bomd::Generator::fccLatticeGenerator()
 
 void bomd::Generator::setVelocity()
 {
-
+    double kB = 3.1668114e-6;
     rowvec sumVelocities = zeros(1,3);
     m_idum = m_idum - time(NULL);
     srand(-m_idum);
@@ -105,14 +107,14 @@ void bomd::Generator::setVelocity()
 
     }else if(velocityDist == "uniform"){
         double v = 0.01;
-        for(Atom* atom : m_atoms){
+        for(Atom* atom : *m_atoms){
             atom->setCoreVelocity({-v+2*v*randu(),-v+2*v*randu(), -v+2*v*randu()});
             sumVelocities +=atom->coreVelocity();
         }
     }else if(velocityDist == "normal"){
 
-        double std = 2.0;
-        for(Atom* atom : m_atoms){
+        for(Atom* atom : *m_atoms){
+            double std = sqrt(kB * m_temperature/atom->coreMass());
             for(int j=0; j < 3 ; j++){
                 atom->setCoreVelocity({randn()*std,randn()*std,randn()*std});
             }
@@ -125,9 +127,8 @@ void bomd::Generator::setVelocity()
         exit(0);
     }
 
-
     //Removing initial linear momentum
-    for(Atom* atom : m_atoms){
+    for(Atom* atom : *m_atoms){
         rowvec v = atom->coreVelocity();
         v -=sumVelocities;
         atom->setCoreVelocity(v);
@@ -136,6 +137,16 @@ void bomd::Generator::setVelocity()
 }
 vector<Atom *> bomd::Generator::atoms() const
 {
-    return m_atoms;
+    return *m_atoms;
 }
+double bomd::Generator::temperature() const
+{
+    return m_temperature;
+}
+
+void bomd::Generator::setTemperature(double temperature)
+{
+    m_temperature = temperature;
+}
+
 

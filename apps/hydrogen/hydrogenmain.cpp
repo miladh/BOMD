@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     }
 
     }else{
-        bomd::Generator generator(&cfg);
+        bomd::Generator generator(&cfg,&atoms);
         generator.setLattice();
         generator.setVelocity();
         atoms = generator.atoms();
