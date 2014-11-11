@@ -20,7 +20,6 @@ Example of config file:
 chemicalSystem =
 {
     name = "CH4";
-
     atoms =
     (
         {
@@ -59,11 +58,9 @@ chemicalSystem =
     nSpinDownElectrons = 0;
 }
 
-
 generatorSettings=
 {
     dr  = 2.5;
-
     Nx = 4;
     Ny = 2;
     Nz = 2;
@@ -101,7 +98,6 @@ modifierSettings =
     velocityRescalingFactor = 0.99;
 };
 
-
 solverSettings =
 {
     # 0 = "Restricted HF"
@@ -111,7 +107,6 @@ solverSettings =
     maxNumOfIteration = 1000000;
     dampingFactor     = 0.5;
 
-
     DIISprocedureSettings =
     {
         # 0 = "off"
@@ -120,12 +115,9 @@ solverSettings =
 
         iterationLimit = 20;
         nTerms         = 3;
-
     };
 
 };
-
-
 
 fileManagerSettings=
 {
@@ -133,9 +125,10 @@ fileManagerSettings=
     outputFilePath = "/"
 };
 
-
 analysisSettings=
 {
+    # 0 = "off"
+    # 1 = "on"
     saveResults = 0;
     outputFilePath = "/"
 
