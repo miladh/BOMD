@@ -19,7 +19,7 @@ Example of config file:
 #-------------------------------
 chemicalSystem =
 {
-    name = "CH5";
+    name = "CH4";
 
     atoms =
     (
@@ -52,15 +52,11 @@ chemicalSystem =
         position = [ 1.78384028, -1.02990066,  0.       ];
         velocity = [0.0, 0.0, 0.0];
         }
-        ,
-        {
-        basis = "atom_1_anion_basis_STO-3G.tm";
-        position = [0.        ,  0.        ,  -2.79679446];
-        velocity = [0.        ,  0.        ,  0.000294533769954];
-        }
     )
-    nSpinUpElectrons = 6;
-    nSpinDownElectrons = 6;
+
+    # Optional (if both are set to zero, there will be equal number of each spin):
+    nSpinUpElectrons = 0;
+    nSpinDownElectrons = 0;
 }
 
 
