@@ -6,7 +6,7 @@ An implementation of the Born-Oppenheimer Molecular Dynamics (BOMD) method based
 To compile the following libraries are needed:
 - Armadillo
 - Libconfig
-- HDf5
+- HDF5
 - Boost
 
 Editing of the code is best done using [QtCreator](http://qt-project.org/downloads).
