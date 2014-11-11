@@ -1,6 +1,6 @@
 BOMD
 ====
-An implementation of the Born-Oppenheimer Molecular Dynamics based on Hartree-Fock calculations. The quantum mechanical effect of the electrons is included in the calculation of energy and forces for the classical motion of the nuclei.
+An implementation of the Born-Oppenheimer Molecular Dynamics method based on Hartree-Fock calculations. The quantum mechanical effect of the electrons is included in the calculation of energy and forces for the classical motion of the nuclei.
 
 
 To compile the following libraries are needed:
