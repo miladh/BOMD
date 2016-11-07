@@ -1,3 +1,7 @@
+[![Project Status: Inactive - The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows.](http://www.repostatus.org/badges/latest/inactive.svg)](http://www.repostatus.org/#inactive) 
+
+The project has reached a stable, usable state but is no longer being actively developed.
+
 BOMD
 ====
 An implementation of the Born-Oppenheimer Molecular Dynamics (BOMD) method based on Hartree-Fock calculations. The quantum mechanical effect of the electrons is included in the calculation of energy and forces for the classical motion of the nuclei.
